@@ -12,12 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated/applications'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedPaymentsRouteImport } from './routes/_authenticated/payments'
 import { Route as AuthenticatedPlansRouteImport } from './routes/_authenticated/plans'
 import { Route as AuthenticatedResetPasswordRouteImport } from './routes/_authenticated/reset-password'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
+import { Route as AuthenticatedApplicationsIndexRouteImport } from './routes/_authenticated/applications.index'
 import { Route as AuthenticatedApplicationsIdRouteImport } from './routes/_authenticated/applications.$id'
 import { Route as AuthenticatedApplicationsNewRouteImport } from './routes/_authenticated/applications.new'
 import { Route as ApiPublicProvisionInitialUsersRouteImport } from './routes/api/public/provision-initial-users'
@@ -36,12 +36,6 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedApplicationsRoute =
-  AuthenticatedApplicationsRouteImport.update({
-    id: '/applications',
-    path: '/applications',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -68,17 +62,23 @@ const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedApplicationsIndexRoute =
+  AuthenticatedApplicationsIndexRouteImport.update({
+    id: '/applications/',
+    path: '/applications/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedApplicationsIdRoute =
   AuthenticatedApplicationsIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedApplicationsRoute,
+    id: '/applications/$id',
+    path: '/applications/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedApplicationsNewRoute =
   AuthenticatedApplicationsNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedApplicationsRoute,
+    id: '/applications/new',
+    path: '/applications/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const ApiPublicProvisionInitialUsersRoute =
   ApiPublicProvisionInitialUsersRouteImport.update({
@@ -90,7 +90,6 @@ const ApiPublicProvisionInitialUsersRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/applications': typeof AuthenticatedApplicationsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/plans': typeof AuthenticatedPlansRoute
@@ -99,11 +98,11 @@ export interface FileRoutesByFullPath {
   '/applications/$id': typeof AuthenticatedApplicationsIdRoute
   '/applications/new': typeof AuthenticatedApplicationsNewRoute
   '/api/public/provision-initial-users': typeof ApiPublicProvisionInitialUsersRoute
+  '/applications/': typeof AuthenticatedApplicationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/applications': typeof AuthenticatedApplicationsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/payments': typeof AuthenticatedPaymentsRoute
   '/plans': typeof AuthenticatedPlansRoute
@@ -112,13 +111,13 @@ export interface FileRoutesByTo {
   '/applications/$id': typeof AuthenticatedApplicationsIdRoute
   '/applications/new': typeof AuthenticatedApplicationsNewRoute
   '/api/public/provision-initial-users': typeof ApiPublicProvisionInitialUsersRoute
+  '/applications': typeof AuthenticatedApplicationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/applications': typeof AuthenticatedApplicationsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/payments': typeof AuthenticatedPaymentsRoute
   '/_authenticated/plans': typeof AuthenticatedPlansRoute
@@ -127,13 +126,13 @@ export interface FileRoutesById {
   '/_authenticated/applications/$id': typeof AuthenticatedApplicationsIdRoute
   '/_authenticated/applications/new': typeof AuthenticatedApplicationsNewRoute
   '/api/public/provision-initial-users': typeof ApiPublicProvisionInitialUsersRoute
+  '/_authenticated/applications/': typeof AuthenticatedApplicationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/login'
-    | '/applications'
     | '/dashboard'
     | '/payments'
     | '/plans'
@@ -142,11 +141,11 @@ export interface FileRouteTypes {
     | '/applications/$id'
     | '/applications/new'
     | '/api/public/provision-initial-users'
+    | '/applications/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
-    | '/applications'
     | '/dashboard'
     | '/payments'
     | '/plans'
@@ -155,12 +154,12 @@ export interface FileRouteTypes {
     | '/applications/$id'
     | '/applications/new'
     | '/api/public/provision-initial-users'
+    | '/applications'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/login'
-    | '/_authenticated/applications'
     | '/_authenticated/dashboard'
     | '/_authenticated/payments'
     | '/_authenticated/plans'
@@ -169,6 +168,7 @@ export interface FileRouteTypes {
     | '/_authenticated/applications/$id'
     | '/_authenticated/applications/new'
     | '/api/public/provision-initial-users'
+    | '/_authenticated/applications/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -200,13 +200,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/applications': {
-      id: '/_authenticated/applications'
-      path: '/applications'
-      fullPath: '/applications'
-      preLoaderRoute: typeof AuthenticatedApplicationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -243,19 +236,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/applications/': {
+      id: '/_authenticated/applications/'
+      path: '/applications'
+      fullPath: '/applications/'
+      preLoaderRoute: typeof AuthenticatedApplicationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/applications/$id': {
       id: '/_authenticated/applications/$id'
-      path: '/$id'
+      path: '/applications/$id'
       fullPath: '/applications/$id'
       preLoaderRoute: typeof AuthenticatedApplicationsIdRouteImport
-      parentRoute: typeof AuthenticatedApplicationsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/applications/new': {
       id: '/_authenticated/applications/new'
-      path: '/new'
+      path: '/applications/new'
       fullPath: '/applications/new'
       preLoaderRoute: typeof AuthenticatedApplicationsNewRouteImport
-      parentRoute: typeof AuthenticatedApplicationsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/provision-initial-users': {
       id: '/api/public/provision-initial-users'
@@ -267,38 +267,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedApplicationsRouteChildren {
-  AuthenticatedApplicationsIdRoute: typeof AuthenticatedApplicationsIdRoute
-  AuthenticatedApplicationsNewRoute: typeof AuthenticatedApplicationsNewRoute
-}
-
-const AuthenticatedApplicationsRouteChildren: AuthenticatedApplicationsRouteChildren =
-  {
-    AuthenticatedApplicationsIdRoute: AuthenticatedApplicationsIdRoute,
-    AuthenticatedApplicationsNewRoute: AuthenticatedApplicationsNewRoute,
-  }
-
-const AuthenticatedApplicationsRouteWithChildren =
-  AuthenticatedApplicationsRoute._addFileChildren(
-    AuthenticatedApplicationsRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedApplicationsRoute: typeof AuthenticatedApplicationsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPaymentsRoute: typeof AuthenticatedPaymentsRoute
   AuthenticatedPlansRoute: typeof AuthenticatedPlansRoute
   AuthenticatedResetPasswordRoute: typeof AuthenticatedResetPasswordRoute
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
+  AuthenticatedApplicationsIdRoute: typeof AuthenticatedApplicationsIdRoute
+  AuthenticatedApplicationsNewRoute: typeof AuthenticatedApplicationsNewRoute
+  AuthenticatedApplicationsIndexRoute: typeof AuthenticatedApplicationsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedApplicationsRoute: AuthenticatedApplicationsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPaymentsRoute: AuthenticatedPaymentsRoute,
   AuthenticatedPlansRoute: AuthenticatedPlansRoute,
   AuthenticatedResetPasswordRoute: AuthenticatedResetPasswordRoute,
   AuthenticatedUsersRoute: AuthenticatedUsersRoute,
+  AuthenticatedApplicationsIdRoute: AuthenticatedApplicationsIdRoute,
+  AuthenticatedApplicationsNewRoute: AuthenticatedApplicationsNewRoute,
+  AuthenticatedApplicationsIndexRoute: AuthenticatedApplicationsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
