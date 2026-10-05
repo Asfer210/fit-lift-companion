@@ -1,0 +1,5 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { ApplicationForm } from "@/components/applications/application-form";
+import { PageHeader, Surface } from "@/components/app/page";
+export const Route = createFileRoute("/_authenticated/applications/new")({ head: () => ({ meta: [{ title: "New Application — Lift & Fit" }, { name: "description", content: "Create a Lift & Fit membership application." }, { property: "og:title", content: "New Application — Lift & Fit" }, { property: "og:description", content: "Create a Lift & Fit membership application." }] }), component: NewApplication });
+function NewApplication() { const navigate = useNavigate(); return <><PageHeader title="New Application" description="The fee date is calculated automatically from the selected plan." /><Surface className="p-5"><ApplicationForm onSaved={(id) => navigate({ to: "/applications/$id", params: { id } })} onCancel={() => navigate({ to: "/applications" })} /></Surface></>; }
