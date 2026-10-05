@@ -11,7 +11,7 @@ import { fmtDate, titleCase } from "@/lib/format";
 import type { Database } from "@/integrations/supabase/types";
 
 type App = Database["public"]["Tables"]["applications"]["Row"] & { plans: { name: string } | null };
-export const Route = createFileRoute("/_authenticated/applications")({ head: () => ({ meta: [{ title: "Applications — Lift & Fit" }, { name: "description", content: "Manage Lift & Fit membership applications." }, { property: "og:title", content: "Applications — Lift & Fit" }, { property: "og:description", content: "Manage Lift & Fit membership applications." }] }), component: Applications });
+export const Route = createFileRoute("/_authenticated/applications/")({ head: () => ({ meta: [{ title: "Applications — Lift & Fit" }, { name: "description", content: "Manage Lift & Fit membership applications." }, { property: "og:title", content: "Applications — Lift & Fit" }, { property: "og:description", content: "Manage Lift & Fit membership applications." }] }), component: Applications });
 function Applications() {
   const [rows, setRows] = useState<App[]>([]); const [q, setQ] = useState(""); const [tab, setTab] = useState("all"); const [loading, setLoading] = useState(true);
   useEffect(() => { supabase.from("applications").select("*,plans(name)").order("created_at", { ascending: false }).then(({ data }) => { setRows((data ?? []) as App[]); setLoading(false); }); }, []);
