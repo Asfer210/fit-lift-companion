@@ -1,0 +1,77 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireExternalSupabaseAuth } from "@/lib/external-auth-middleware";
+import { normalizePhone, phoneToEmail } from "./format";
+
+const category = z.enum(["MALE", "FEMALE", "COMMON"]);
+
+export const createTrainer = createServerFn({ method: "POST" })
+  .middleware([requireExternalSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      name: z.string().trim().min(1).max(150),
+      username: z.string().trim().min(5).max(30),
+      trainer_category: category,
+      join_date: z.string().nullable(),
+      password: z.string().min(8).max(72),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertManager, supabaseAdmin } = await import("./staff.server");
+    await assertManager(context.supabase as never, context.userId);
+    const phone = normalizePhone(data.username);
+    if (!phone) throw new Error("INVALID_PHONE");
+    const { data: existing } = await supabaseAdmin.from("users").select("id").eq("username", phone).maybeSingle();
+    if (existing) throw new Error("TRAINER_EXISTS");
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: phoneToEmail(phone), password: data.password, email_confirm: true,
+    });
+    if (error || !created.user) {
+      if (error?.message?.toLowerCase().includes("already")) throw new Error("TRAINER_EXISTS");
+      throw new Error("CREATE_FAILED");
+    }
+    const { error: insErr } = await supabaseAdmin.from("users").insert({
+      id: created.user.id, username: phone, name: data.name, role: "TRAINER",
+      trainer_category: data.trainer_category, join_date: data.join_date, is_active: true,
+    });
+    if (insErr) {
+      await supabaseAdmin.auth.admin.deleteUser(created.user.id);
+      throw new Error("CREATE_FAILED");
+    }
+    return { ok: true };
+  });
+
+export const updateTrainer = createServerFn({ method: "POST" })
+  .middleware([requireExternalSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      id: z.string().uuid(),
+      name: z.string().trim().min(1).max(150),
+      trainer_category: category,
+      join_date: z.string().nullable(),
+      is_active: z.boolean(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertManager, getTrainer, supabaseAdmin } = await import("./staff.server");
+    await assertManager(context.supabase as never, context.userId);
+    await getTrainer(data.id);
+    const { error } = await supabaseAdmin.from("users").update({
+      name: data.name, trainer_category: data.trainer_category, join_date: data.join_date, is_active: data.is_active,
+    }).eq("id", data.id).eq("role", "TRAINER");
+    if (error) throw new Error("UPDATE_FAILED");
+    await supabaseAdmin.auth.admin.updateUserById(data.id, { ban_duration: data.is_active ? "none" : "876000h" });
+    return { ok: true };
+  });
+
+export const resetTrainerPassword = createServerFn({ method: "POST" })
+  .middleware([requireExternalSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid(), password: z.string().min(8).max(72) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { assertManager, getTrainer, supabaseAdmin } = await import("./staff.server");
+    await assertManager(context.supabase as never, context.userId);
+    await getTrainer(data.id);
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, { password: data.password });
+    if (error) throw new Error("RESET_FAILED");
+    return { ok: true };
+  });
