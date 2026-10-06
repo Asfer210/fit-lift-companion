@@ -31,6 +31,9 @@ export function friendlyError(err: unknown, fallback = "Something went wrong. Pl
   if (msg.includes("INVALID_PLAN")) return "Please select an active plan.";
   if (msg.includes("APPLICATION_INACTIVE")) return "This application is inactive. Reactivate it first.";
   if (msg.includes("TRAINER_EXISTS")) return "Trainer already exists.";
+  if (msg.includes("service-role key")) return "Trainer creation isn't set up yet: the Supabase secret key is missing.";
+  if (msg.includes("INVALID_PHONE")) return "Enter a valid WhatsApp number.";
+  if (msg.includes("CREATE_FAILED")) return "Could not create the trainer. Please try again.";
   if (msg.includes("duplicate key")) return "This record already exists.";
   return fallback;
 }
