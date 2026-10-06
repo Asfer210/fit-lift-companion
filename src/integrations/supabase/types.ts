@@ -246,6 +246,7 @@ export type Database = {
       create_application: {
         Args: {
           _age: number
+          _app_no: string
           _app_date: string
           _category: string
           _mobile: string
@@ -299,6 +300,7 @@ export type Database = {
       update_application: {
         Args: {
           _age: number
+          _app_no: string
           _category: string
           _id: string
           _mobile: string
