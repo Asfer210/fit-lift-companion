@@ -32,13 +32,9 @@ export function ApplicationForm({ application, onSaved, onCancel }: { applicatio
     const dup = await supabase.from("applications").select("id").eq("application_id", appNo).maybeSingle();
     if (dup.data && dup.data.id !== application?.id) { setBusy(false); setErrors({ appNo: "This Application Number already exists." }); return; }
     const args = { _name: v.name.trim(), _age: v.age ? Number(v.age) : 0, _weight: v.weight ? Number(v.weight) : 0, _mobile: mobile ?? "", _whatsapp: whatsapp ?? "", _category: v.category, _workout: v.workout || "DAY" };
-    const result = application ? await supabase.rpc("update_application", { ...args, _id: application.id }) : await supabase.rpc("create_application", { ...args, _app_date: v.applicationDate, _plan: v.planId });
+    const result = application ? await supabase.rpc("update_application", { ...args, _id: application.id, _app_no: appNo }) : await supabase.rpc("create_application", { ...args, _app_no: appNo, _app_date: v.applicationDate, _plan: v.planId });
     if (result.error) { setBusy(false); toast.error(friendlyError(result.error, "Unable to save application. Please try again.")); return; }
     const savedId = application?.id ?? (result.data as App).id;
-    if (appNo !== (application?.application_id ?? (result.data as App).application_id)) {
-      const up = await supabase.from("applications").update({ application_id: appNo }).eq("id", savedId).select("id");
-      if (up.error || !up.data?.length) { setBusy(false); toast.error(up.error?.message.includes("duplicate") ? "This Application Number already exists." : "Saved, but the Application Number could not be set."); onSaved(savedId); return; }
-    }
     setBusy(false); toast.success(application ? "Application updated." : "Application created."); onSaved(savedId);
   }
   const field = (name: keyof ApplicationValues, label: string, type = "text") => <div className="space-y-2"><Label htmlFor={name}>{label}</Label><Input id={name} type={type} value={v[name]} onChange={(e) => set(name, e.target.value)} />{errors[name] && <p className="text-xs text-destructive">{errors[name]}</p>}</div>;
