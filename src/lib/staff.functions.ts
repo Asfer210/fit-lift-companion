@@ -17,25 +17,18 @@ export const createTrainer = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { assertManager, supabaseAdmin } = await import("./staff.server");
-    await assertManager(context.supabase as never, context.userId);
     const phone = normalizePhone(data.username);
     if (!phone) throw new Error("INVALID_PHONE");
-    const { data: existing } = await supabaseAdmin.from("users").select("id").eq("username", phone).maybeSingle();
-    if (existing) throw new Error("TRAINER_EXISTS");
-    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-      email: phoneToEmail(phone), password: data.password, email_confirm: true,
+    void phoneToEmail;
+    const { error } = await (context.supabase as any).rpc("create_trainer", {
+      _name: data.name, _phone: phone, _password: data.password,
+      _category: data.trainer_category, _join: data.join_date,
     });
-    if (error || !created.user) {
-      if (error?.message?.toLowerCase().includes("already")) throw new Error("TRAINER_EXISTS");
-      throw new Error("CREATE_FAILED");
-    }
-    const { error: insErr } = await supabaseAdmin.from("users").insert({
-      id: created.user.id, username: phone, name: data.name, role: "TRAINER",
-      trainer_category: data.trainer_category, join_date: data.join_date, is_active: true,
-    });
-    if (insErr) {
-      await supabaseAdmin.auth.admin.deleteUser(created.user.id);
+    if (error) {
+      const m = error.message ?? "";
+      if (m.includes("TRAINER_EXISTS")) throw new Error("TRAINER_EXISTS");
+      if (m.includes("NOT_AUTHORIZED")) throw new Error("NOT_AUTHORIZED");
+      console.error(error);
       throw new Error("CREATE_FAILED");
     }
     return { ok: true };
