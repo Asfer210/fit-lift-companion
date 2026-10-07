@@ -283,6 +283,18 @@ export type Database = {
       }
       deactivate_application: { Args: { _app: string }; Returns: undefined }
       is_manager: { Args: never; Returns: boolean }
+      get_payment_history: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          paid_date: string
+          amount: number
+          application_id: string
+          applicant_name: string
+          plan_name: string
+          paid_by: string
+        }[]
+      }
       mark_reminder_sent: { Args: { _app: string }; Returns: undefined }
       reactivate_application: {
         Args: { _app: string; _plan: string; _start: string }
