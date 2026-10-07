@@ -46,14 +46,10 @@ export const updateTrainer = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { assertManager, getTrainer, supabaseAdmin } = await import("./staff.server");
-    await assertManager(context.supabase as never, context.userId);
-    await getTrainer(data.id);
-    const { error } = await supabaseAdmin.from("users").update({
-      name: data.name, trainer_category: data.trainer_category, join_date: data.join_date, is_active: data.is_active,
-    }).eq("id", data.id).eq("role", "TRAINER");
-    if (error) throw new Error("UPDATE_FAILED");
-    await supabaseAdmin.auth.admin.updateUserById(data.id, { ban_duration: data.is_active ? "none" : "876000h" });
+    const { error } = await (context.supabase as any).rpc("update_trainer", {
+      _id: data.id, _name: data.name, _category: data.trainer_category, _join: data.join_date, _active: data.is_active,
+    });
+    if (error) { console.error(error); throw new Error(error.message?.includes("NOT_AUTHORIZED") ? "NOT_AUTHORIZED" : "UPDATE_FAILED"); }
     return { ok: true };
   });
 
@@ -61,10 +57,7 @@ export const resetTrainerPassword = createServerFn({ method: "POST" })
   .middleware([requireExternalSupabaseAuth])
   .inputValidator((d) => z.object({ id: z.string().uuid(), password: z.string().min(8).max(72) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { assertManager, getTrainer, supabaseAdmin } = await import("./staff.server");
-    await assertManager(context.supabase as never, context.userId);
-    await getTrainer(data.id);
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.id, { password: data.password });
-    if (error) throw new Error("RESET_FAILED");
+    const { error } = await (context.supabase as any).rpc("reset_trainer_password", { _id: data.id, _password: data.password });
+    if (error) { console.error(error); throw new Error("RESET_FAILED"); }
     return { ok: true };
   });
