@@ -12,7 +12,7 @@ export function ReminderDialog({ application, open, onOpenChange, onDone }: { ap
   const [opened, setOpened] = useState(false);
   if (!application) return null;
   const currentApplication = application;
-  const message = `Hello ${currentApplication.applicant_name},\n\nYour gym membership payment is due on ${fmtLongDate(currentApplication.fee_date)}.\n\nPlease make the payment at your convenience.\n\nThank you!`;
+  const message = `Lift & Fit\n\nHello ${currentApplication.applicant_name},\n\nYour gym membership payment is due on ${fmtLongDate(currentApplication.fee_date)}.\n\nPlease make the payment at your convenience.\n\nThank you!\n\n— Lift & Fit`;
   const phone = (currentApplication.whatsapp_number || currentApplication.mobile_number || "").replace(/\D/g, "");
   function launch() { window.open(`https://wa.me/${encodeURIComponent(phone)}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer"); setOpened(true); }
   async function confirm() { const { error } = await supabase.rpc("mark_reminder_sent", { _app: currentApplication.id }); if (error) { toast.error(friendlyError(error)); return; } toast.success("Reminder marked as sent."); onDone(); onOpenChange(false); setOpened(false); }
